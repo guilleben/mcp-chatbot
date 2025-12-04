@@ -1,0 +1,29 @@
+{
+  "version": "1.0",
+  "last_updated": "2025-12-03T12:30:56.734093",
+  "total_entries": 2,
+  "entries": {
+    "que_ipc": {
+      "question": "que es el IPC?",
+      "normalized_question": "que es el ipc",
+      "response": "## ¿Qué es el IPC?\n\nEl **Índice de Precios al Consumidor (IPC)** es una medida que nos dice cómo cambian los precios de los productos y servicios que usamos a diario.  \nEn otras palabras, es una forma de cuantificar la inflación, es decir, el aumento generalizado de los precios en la economía.\n\n### ¿Cómo se calcula?\n\n1. **Selección de bienes y servicios**  \n   Se eligen los artículos que más compramos: alimentos, vivienda, transporte, salud, educación, ocio, etc.\n\n2. **Recolección de precios**  \n   Cada mes se recogen los precios de esos productos en distintas zonas del país.\n\n3. **Pesaje**  \n   Cada producto recibe un peso según su importancia en el gasto de la gente. Por ejemplo, el alquiler de una casa tiene mayor peso que una camiseta.\n\n4. **Comparación con un periodo base**  \n   Se compara el precio actual con el de un año anterior (o un periodo base) para ver cuánto ha subido o bajado.\n\n5. **Cálculo del índice**  \n   Se suman los cambios ponderados y se convierte en un número que representa la variación porcentual.\n\n### ¿Para qué sirve?\n\n- **Medir la inflación**: nos ayuda a saber si el dinero pierde o gana poder adquisitivo.\n- **Política económica**: los gobiernos y bancos centrales usan el IPC para decidir tasas de interés y políticas fiscales.\n- **Ajustes salariales y jubilaciones**: muchos salarios y pensiones se revisan en función del IPC para mantener su poder de compra.\n- **Planificación familiar**: permite estimar el aumento de precios de los bienes que consumimos día a día.\n\nEn resumen, el IPC es la brújula que nos indica si los precios están subiendo o bajando y en qué medida, lo que nos ayuda a tomar decisiones económicas más informadas.",
+      "category": "ipc_ultimo",
+      "is_conceptual": true,
+      "quality_score": 0.8,
+      "created_at": "2025-12-03T12:30:41.624493",
+      "last_used": "2025-12-03T12:30:48.574091",
+      "use_count": 2
+    },
+    "que_significa_ipc": {
+      "question": "que significa IPC?",
+      "normalized_question": "que significa ipc",
+      "response": "## ¿Qué significa IPC?\n\n**IPC** son las siglas de **Índice de Precios al Consumidor**.  \nEs el indicador que se usa para medir cómo cambian los precios de los bienes y servicios que la gente compra en su día a día, y por eso se considera una medida de la inflación.",
+      "category": "ipc_ultimo",
+      "is_conceptual": true,
+      "quality_score": 0.8,
+      "created_at": "2025-12-03T12:30:56.733720",
+      "last_used": "2025-12-03T12:30:56.733738",
+      "use_count": 1
+    }
+  }
+}

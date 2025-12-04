@@ -1,0 +1,83 @@
+services:
+  # Base de datos MySQL para desarrollo
+  mysql:
+    image: mysql:8.0
+    container_name: mcp-chatbot-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root_dev_password
+      MYSQL_USER: chatbot_user
+      MYSQL_PASSWORD: chatbot_dev_password
+    volumes:
+      - mysql-data:/var/lib/mysql
+    ports:
+      - "3307:3306"
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+
+  # API del chatbot
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mcp-chatbot-api
+    image: mcp-chatbot-api:latest
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - SERP_API_KEY=${SERP_API_KEY:-}
+      # Configuración MySQL para desarrollo (usa el servicio mysql del compose)
+      - HOST_DBB=${HOST_DBB:-mysql}
+      - DB_PORT=${DB_PORT:-3306}
+      - USER_DBB=${USER_DBB:-chatbot_user}
+      - PASSWORD_DBB=${PASSWORD_DBB:-chatbot_dev_password}
+      - NAME_DBB_DATALAKE_ECONOMICO=${NAME_DBB_DATALAKE_ECONOMICO:-datalake_economico}
+      - NAME_DBB_DWH_ECONOMICO=${NAME_DBB_DWH_ECONOMICO:-dwh_economico}
+      - NAME_DBB_DATALAKE_SOCIO=${NAME_DBB_DATALAKE_SOCIO:-datalake_socio}
+      - NAME_DBB_DWH_SOCIO=${NAME_DBB_DWH_SOCIO:-dwh_socio}
+    env_file:
+      - .env
+    volumes:
+      # Montar el directorio actual para desarrollo (opcional, comentar en producción)
+      - .:/app
+      # Montar volumen para datos de SQLite si se usa
+      - chatbot-data:/app/data
+    ports:
+      - "8000:8000"
+    working_dir: /app
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health').read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend con Nginx
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: mcp-chatbot-frontend
+    image: mcp-chatbot-frontend:latest
+    ports:
+      - "8080:80"
+    volumes:
+      # Montar frontend para desarrollo (opcional, comentar en producción)
+      - ./frontend:/usr/share/nginx/html
+    restart: unless-stopped
+    depends_on:
+      - api
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/chat-widget-standalone.html"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  chatbot-data:
+    driver: local
+  mysql-data:
+    driver: local
+

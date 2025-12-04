@@ -1,0 +1,17 @@
+# Dockerfile para servir el frontend con Nginx
+FROM nginx:alpine
+
+# Instalar wget para healthcheck (ya viene incluido en alpine, pero por si acaso)
+RUN apk add --no-cache wget
+
+# Copiar archivos del frontend
+COPY frontend/ /usr/share/nginx/html/
+
+# Copiar configuración personalizada de Nginx
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Exponer puerto 80
+EXPOSE 80
+
+# Nginx se inicia automáticamente
+

@@ -1,0 +1,50 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile
+Dockerfile.frontend
+docker-compose.yml
+.dockerignore
+DOCKER.md
+
+# Documentación
+*.md
+LICENSE
+
+# Logs
+*.log
+logs/
+
+# Datos temporales
+*.db
+*.sqlite
+*.sqlite3
+test.db
+

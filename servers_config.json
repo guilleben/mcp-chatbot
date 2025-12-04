@@ -1,12 +1,9 @@
 {
   "mcpServers": {
-    "sqlite": {
-      "command": "uvx",
-      "args": ["mcp-server-sqlite", "--db-path", "./test.db"]
-    },
-    "puppeteer": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-puppeteer"]
+    "ipecd_tools": {
+      "command": "python3",
+      "args": ["mcp_tools_server.py"],
+      "env": {}
     }
   }
 }

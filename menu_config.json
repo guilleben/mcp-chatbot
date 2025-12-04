@@ -1,0 +1,607 @@
+{
+  "root_node_id": "root",
+  "nodes": [
+    {
+      "id": "root",
+      "title": "Menú Principal",
+      "description": "👋 ¡Hola! Soy el asistente del IPECD. ¿En qué puedo ayudarte?",
+      "action": "menu",
+      "children": [
+        "cat_precios",
+        "cat_dolar",
+        "cat_empleo",
+        "cat_semaforo",
+        "cat_censo",
+        "cat_ayuda"
+      ],
+      "keywords": [
+        "menu",
+        "inicio",
+        "principal",
+        "volver"
+      ],
+      "db_query": null
+    },
+    {
+      "id": "cat_precios",
+      "title": "💰 Precios e Inflación",
+      "description": "IPC, canasta básica, inflación",
+      "action": "menu",
+      "children": [
+        "ipc_ultimo",
+        "ipc_corrientes",
+        "ipc_nea",
+        "ipc_nacion",
+        "canasta_basica"
+      ],
+      "keywords": [
+        "precios",
+        "inflacion",
+        "inflación",
+        "ipc",
+        "canasta"
+      ],
+      "db_query": null
+    },
+    {
+      "id": "ipc_ultimo",
+      "title": "📊 Último IPC",
+      "description": "Ver el índice de precios más reciente",
+      "action": "tool",
+      "children": [],
+      "keywords": [
+        "ultimo",
+        "último",
+        "ipc",
+        "reciente"
+      ],
+      "db_query": null,
+      "tool": "get_ipc",
+      "tool_args": {}
+    },
+    {
+      "id": "ipc_nea",
+      "title": "🌍 IPC Región NEA",
+      "description": "Inflación en la región NEA",
+      "action": "tool",
+      "children": [],
+      "keywords": [
+        "nea",
+        "nordeste",
+        "region"
+      ],
+      "db_query": null,
+      "tool": "get_ipc",
+      "tool_args": {
+        "region": "NEA"
+      }
+    },
+    {
+      "id": "ipc_nacion",
+      "title": "🇦🇷 IPC Nacional",
+      "description": "Inflación a nivel nacional",
+      "action": "tool",
+      "children": [],
+      "keywords": [
+        "nacion",
+        "nacional",
+        "pais"
+      ],
+      "db_query": null,
+      "tool": "get_ipc",
+      "tool_args": {
+        "region": "Nacion"
+      }
+    },
+    {
+      "id": "canasta_basica",
+      "title": "🛒 Canasta Básica",
+      "description": "Precios de la canasta básica alimentaria",
+      "action": "tool",
+      "children": [],
+      "keywords": [
+        "canasta",
+        "basica",
+        "alimentaria",
+        "cbt",
+        "cba",
+        "pobreza",
+        "indigencia"
+      ],
+      "db_query": null,
+      "tool": "get_canasta_basica",
+      "tool_args": {}
+    },
+    {
+      "id": "cat_dolar",
+      "title": "💵 Cotización del Dólar",
+      "description": "Tipos de cambio del dólar",
+      "action": "menu",
+      "children": [
+        "dolar_blue",
+        "dolar_oficial",
+        "dolar_mep",
+        "dolar_ccl"
+      ],
+      "keywords": [
+        "dolar",
+        "dólar",
+        "cambio",
+        "divisa",
+        "moneda"
+      ],
+      "db_query": null
+    },
+    {
+      "id": "dolar_blue",
+      "title": "💲 Dólar Blue",
+      "description": "Cotización del dólar blue",
+      "action": "tool",
+      "children": [],
+      "keywords": [
+        "blue",
+        "paralelo",
+        "informal"
+      ],
+      "db_query": null,
+      "tool": "get_dolar",
+      "tool_args": {
+        "tipo": "blue"
+      }
+    },
+    {
+      "id": "dolar_oficial",
+      "title": "🏦 Dólar Oficial",
+      "description": "Cotización del dólar oficial",
+      "action": "tool",
+      "children": [],
+      "keywords": [
+        "oficial",
+        "banco",
+        "formal"
+      ],
+      "db_query": null,
+      "tool": "get_dolar",
+      "tool_args": {
+        "tipo": "oficial"
+      }
+    },
+    {
+      "id": "dolar_mep",
+      "title": "📈 Dólar MEP",
+      "description": "Cotización del dólar MEP (bolsa)",
+      "action": "tool",
+      "children": [],
+      "keywords": [
+        "mep",
+        "bolsa"
+      ],
+      "db_query": null,
+      "tool": "get_dolar",
+      "tool_args": {
+        "tipo": "mep"
+      }
+    },
+    {
+      "id": "dolar_ccl",
+      "title": "📊 Dólar CCL",
+      "description": "Cotización del dólar Contado con Liquidación",
+      "action": "tool",
+      "children": [],
+      "keywords": [
+        "ccl",
+        "contado",
+        "liquidacion"
+      ],
+      "db_query": null,
+      "tool": "get_dolar",
+      "tool_args": {
+        "tipo": "ccl"
+      }
+    },
+    {
+      "id": "cat_empleo",
+      "title": "👔 Empleo y Trabajo",
+      "description": "Tasas de empleo, desempleo, salarios",
+      "action": "menu",
+      "children": [
+        "empleo_corrientes",
+        "empleo_nacional",
+        "empleo_sipa",
+        "ecv"
+      ],
+      "keywords": [
+        "empleo",
+        "trabajo",
+        "desempleo",
+        "desocupacion",
+        "ocupacion",
+        "laboral"
+      ],
+      "db_query": null
+    },
+    {
+      "id": "empleo_corrientes",
+      "title": "📍 Empleo en Corrientes",
+      "description": "Tasas de empleo y desempleo en Corrientes (EPH)",
+      "action": "tool",
+      "children": [],
+      "keywords": [
+        "corrientes",
+        "local",
+        "provincia",
+        "eph",
+        "encuesta permanente hogares"
+      ],
+      "db_query": null,
+      "tool": "get_empleo",
+      "tool_args": {
+        "provincia": "Corrientes",
+        "tipo": "eph"
+      }
+    },
+    {
+      "id": "empleo_nacional",
+      "title": "🇦🇷 Empleo Nacional",
+      "description": "Tasas de empleo y desempleo a nivel nacional",
+      "action": "tool",
+      "children": [],
+      "keywords": [
+        "nacional",
+        "argentina",
+        "pais"
+      ],
+      "db_query": null,
+      "tool": "get_empleo",
+      "tool_args": {
+        "tipo": "eph"
+      }
+    },
+    {
+      "id": "empleo_sipa",
+      "title": "📋 Empleo Registrado (SIPA)",
+      "description": "Empleo formal registrado en SIPA",
+      "action": "tool",
+      "children": [],
+      "keywords": [
+        "sipa",
+        "registrado",
+        "formal"
+      ],
+      "db_query": null,
+      "tool": "get_empleo",
+      "tool_args": {
+        "tipo": "sipa"
+      }
+    },
+    {
+      "id": "ecv",
+      "title": "📋 Encuesta de Calidad de Vida (ECV)",
+      "description": "Datos de la ECV: empleo, salarios, trabajo público/privado",
+      "action": "tool",
+      "children": [],
+      "keywords": [
+        "ecv",
+        "calidad",
+        "vida",
+        "encuesta",
+        "salarios",
+        "publico",
+        "privado"
+      ],
+      "db_query": null,
+      "tool": "get_ecv",
+      "tool_args": {}
+    },
+    {
+      "id": "cat_semaforo",
+      "title": "🚦 Semáforo Económico",
+      "description": "Indicadores económicos clave de Corrientes",
+      "action": "menu",
+      "children": [
+        "semaforo_interanual",
+        "semaforo_intermensual",
+        "patentamientos",
+        "aeropuertos",
+        "oede",
+        "pobreza"
+      ],
+      "keywords": [
+        "semaforo",
+        "semáforo",
+        "indicadores",
+        "economia"
+      ],
+      "db_query": null
+    },
+    {
+      "id": "semaforo_interanual",
+      "title": "📈 Variación Interanual",
+      "description": "Comparación con el mismo período del año anterior",
+      "action": "tool",
+      "children": [],
+      "keywords": [
+        "interanual",
+        "anual",
+        "año"
+      ],
+      "db_query": null,
+      "tool": "get_semaforo",
+      "tool_args": {
+        "tipo": "interanual"
+      }
+    },
+    {
+      "id": "semaforo_intermensual",
+      "title": "📊 Variación Mensual",
+      "description": "Comparación con el mes anterior",
+      "action": "tool",
+      "children": [],
+      "keywords": [
+        "mensual",
+        "mes",
+        "intermensual"
+      ],
+      "db_query": null,
+      "tool": "get_semaforo",
+      "tool_args": {
+        "tipo": "intermensual"
+      }
+    },
+    {
+      "id": "cat_censo",
+      "title": "👥 Población y Censo",
+      "description": "Datos demográficos y censales",
+      "action": "menu",
+      "children": [
+        "censo_municipios",
+        "censo_departamentos"
+      ],
+      "keywords": [
+        "censo",
+        "poblacion",
+        "población",
+        "habitantes",
+        "demografía",
+        "demograficos",
+        "demográficos",
+        "demografico",
+        "demográfico",
+        "censales",
+        "censal",
+        "datos demograficos",
+        "datos demográficos"
+      ],
+      "db_query": null
+    },
+    {
+      "id": "censo_municipios",
+      "title": "🏘️ Población por Municipio",
+      "description": "Población de cada municipio de Corrientes",
+      "action": "tool",
+      "children": [],
+      "keywords": [
+        "municipio",
+        "municipios",
+        "localidad",
+        "poblacion por municipio",
+        "población por municipio",
+        "censo municipio",
+        "censo municipios",
+        "habitantes municipio",
+        "censo 2022 municipio",
+        "poblacion municipio",
+        "comparacion censo",
+        "comparación censo",
+        "censo 2010",
+        "censo 2022",
+        "comparar censo",
+        "variacion poblacion",
+        "variación población",
+        "crecimiento poblacional"
+      ],
+      "db_query": null,
+      "tool": "get_censo",
+      "tool_args": {}
+    },
+    {
+      "id": "censo_departamentos",
+      "title": "📍 Población por Departamento",
+      "description": "Población de cada departamento de Corrientes",
+      "action": "tool",
+      "children": [],
+      "keywords": [
+        "departamento",
+        "departamentos",
+        "poblacion por departamento",
+        "población por departamento",
+        "censo departamento",
+        "censo departamentos",
+        "habitantes departamento"
+      ],
+      "db_query": null,
+      "tool": "get_censo_departamentos",
+      "tool_args": {}
+    },
+    {
+      "id": "cat_ayuda",
+      "title": "❓ Ayuda",
+      "description": "Información sobre cómo usar el asistente",
+      "action": "info",
+      "children": [],
+      "keywords": [
+        "ayuda",
+        "help",
+        "como usar",
+        "instrucciones"
+      ],
+      "db_query": null,
+      "info_text": "## 🤖 ¿Cómo puedo ayudarte?\n\nSoy el asistente virtual del IPECD (Instituto Provincial de Estadística y Censos de Corrientes).\n\n### Puedo ayudarte con:\n\n- **💰 Precios e Inflación**: Índice de Precios al Consumidor (IPC), canasta básica\n- **💵 Dólar**: Cotización del dólar blue, oficial, MEP y CCL\n- **👔 Empleo**: Tasas de empleo y desempleo de la EPH y SIPA\n- **🚦 Semáforo Económico**: Indicadores clave de la economía correntina\n- **👥 Censo**: Población por municipio y departamento\n\n### ¿Cómo usarme?\n\n1. Selecciona una opción del menú usando el número\n2. O escríbeme directamente lo que necesitas, por ejemplo:\n   - \"¿Cuál es el último IPC?\"\n   - \"Quiero ver el dólar blue\"\n   - \"Población de Goya\"\n\n¡Estoy aquí para ayudarte! 😊"
+    },
+    {
+      "id": "patentamientos",
+      "title": "🚗 Patentamientos de Vehículos",
+      "description": "Patentamientos de autos y motos 0km (DNRPA)",
+      "action": "tool",
+      "tool": "get_patentamientos",
+      "tool_args": {},
+      "children": [],
+      "keywords": [
+        "patentamiento",
+        "patentamientos",
+        "vehiculos",
+        "autos",
+        "motos",
+        "0km",
+        "dnrpa"
+      ]
+    },
+    {
+      "id": "aeropuertos",
+      "title": "✈️ Pasajeros Aeropuertos",
+      "description": "Movimiento de pasajeros en aeropuertos (ANAC)",
+      "action": "tool",
+      "tool": "get_aeropuertos",
+      "tool_args": {},
+      "children": [],
+      "keywords": [
+        "aeropuerto",
+        "aeropuertos",
+        "pasajeros",
+        "vuelos",
+        "anac",
+        "avion"
+      ]
+    },
+    {
+      "id": "oede",
+      "title": "📊 Observatorio de Empleo (OEDE)",
+      "description": "Empleo y dinámica empresarial por sector",
+      "action": "tool",
+      "tool": "get_oede",
+      "tool_args": {},
+      "children": [],
+      "keywords": [
+        "oede",
+        "observatorio",
+        "empleo",
+        "empresas",
+        "sectores",
+        "dinamica"
+      ]
+    },
+    {
+      "id": "pobreza",
+      "title": "📉 Pobreza e Indigencia",
+      "description": "Líneas de pobreza (CBT) e indigencia (CBA)",
+      "action": "tool",
+      "tool": "get_pobreza",
+      "tool_args": {},
+      "children": [],
+      "keywords": [
+        "pobreza",
+        "indigencia",
+        "cbt",
+        "cba",
+        "linea",
+        "canasta"
+      ]
+    },
+    {
+      "id": "emae",
+      "title": "📈 Actividad Económica (EMAE)",
+      "description": "Estimador Mensual de Actividad Económica",
+      "action": "tool",
+      "tool": "get_emae",
+      "tool_args": {},
+      "children": [],
+      "keywords": [
+        "emae",
+        "actividad",
+        "economica",
+        "pbi",
+        "mensual"
+      ]
+    },
+    {
+      "id": "pbg",
+      "title": "🏭 Producto Bruto Geográfico (PBG)",
+      "description": "Producción económica por sector de Corrientes",
+      "action": "tool",
+      "tool": "get_pbg",
+      "tool_args": {},
+      "children": [],
+      "keywords": [
+        "pbg",
+        "producto",
+        "bruto",
+        "geografico",
+        "produccion"
+      ]
+    },
+    {
+      "id": "salarios",
+      "title": "💵 Salarios",
+      "description": "Salario mínimo, RIPTE e índices salariales",
+      "action": "tool",
+      "tool": "get_salarios",
+      "tool_args": {},
+      "children": [],
+      "keywords": [
+        "salario",
+        "salarios",
+        "smvm",
+        "minimo",
+        "ripte",
+        "sueldo"
+      ]
+    },
+    {
+      "id": "supermercados",
+      "title": "🛒 Supermercados",
+      "description": "Facturación de supermercados por rubro",
+      "action": "tool",
+      "tool": "get_supermercados",
+      "tool_args": {},
+      "children": [],
+      "keywords": [
+        "supermercado",
+        "supermercados",
+        "facturacion",
+        "ventas",
+        "minorista"
+      ]
+    },
+    {
+      "id": "construccion",
+      "title": "🏗️ Construcción (IERIC)",
+      "description": "Puestos de trabajo e ingresos en construcción",
+      "action": "tool",
+      "tool": "get_construccion",
+      "tool_args": {},
+      "children": [],
+      "keywords": [
+        "construccion",
+        "ieric",
+        "obras",
+        "edificacion"
+      ]
+    },
+    {
+      "id": "ipc_corrientes",
+      "title": "📊 IPC de Corrientes",
+      "description": "Índice de precios específico de Corrientes",
+      "action": "tool",
+      "tool": "get_ipc_corrientes",
+      "tool_args": {},
+      "children": [],
+      "keywords": [
+        "ipc",
+        "corrientes",
+        "ipicorr",
+        "inflacion",
+        "precios"
+      ]
+    }
+  ]
+}

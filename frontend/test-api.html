@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test API Connection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-result {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test de Conexión a la API</h1>
+    <p>Este archivo te ayuda a verificar que la API esté funcionando correctamente.</p>
+    
+    <button onclick="testConnection()">Probar Conexión</button>
+    
+    <div id="results"></div>
+    
+    <script>
+        async function testConnection() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Probando conexión...</p>';
+            
+            const apiUrl = 'http://localhost:8000/api/chat';
+            
+            try {
+                // Test 1: Health check
+                resultsDiv.innerHTML += '<div class="test-result">Probando health check...</div>';
+                const healthResponse = await fetch('http://localhost:8000/api/health');
+                const healthData = await healthResponse.json();
+                resultsDiv.innerHTML += `<div class="test-result success">
+                    <strong>✓ Health Check:</strong> OK<br>
+                    <pre>${JSON.stringify(healthData, null, 2)}</pre>
+                </div>`;
+                
+                // Test 2: Chat endpoint
+                resultsDiv.innerHTML += '<div class="test-result">Probando endpoint de chat...</div>';
+                const chatResponse = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: 'Hola',
+                        session_id: 'test-session'
+                    }),
+                    mode: 'cors'
+                });
+                
+                if (!chatResponse.ok) {
+                    throw new Error(`HTTP ${chatResponse.status}: ${chatResponse.statusText}`);
+                }
+                
+                const chatData = await chatResponse.json();
+                resultsDiv.innerHTML += `<div class="test-result success">
+                    <strong>✓ Chat Endpoint:</strong> OK<br>
+                    <pre>${JSON.stringify(chatData, null, 2)}</pre>
+                </div>`;
+                
+                resultsDiv.innerHTML += '<div class="test-result success"><strong>✓ Todas las pruebas pasaron correctamente!</strong></div>';
+                
+            } catch (error) {
+                resultsDiv.innerHTML += `<div class="test-result error">
+                    <strong>✗ Error:</strong> ${error.message}<br>
+                    <pre>${error.stack || error}</pre>
+                    <p><strong>Posibles causas:</strong></p>
+                    <ul>
+                        <li>La API no está corriendo en http://localhost:8000</li>
+                        <li>Problema de CORS (verifica la configuración del servidor)</li>
+                        <li>El navegador está bloqueando la conexión</li>
+                    </ul>
+                    <p><strong>Verifica:</strong></p>
+                    <ul>
+                        <li>¿Está corriendo docker-compose up?</li>
+                        <li>¿Puedes acceder a <a href="http://localhost:8000/api/health" target="_blank">http://localhost:8000/api/health</a>?</li>
+                        <li>Revisa la consola del navegador (F12) para más detalles</li>
+                    </ul>
+                </div>`;
+            }
+        }
+        
+        // Auto-ejecutar al cargar
+        window.addEventListener('load', () => {
+            testConnection();
+        });
+    </script>
+</body>
+</html>
+
+

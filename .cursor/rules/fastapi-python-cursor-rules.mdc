@@ -1,0 +1,440 @@
+---
+alwaysApply: true
+---
+
+
+## Mejoras principales
+
+1. Reglas FastAPI: mejoradas y alineadas con el proyecto.
+2. Reglas MCP: gestión de servidores, herramientas y protocolo.
+3. Sistema de árbol de decisión: navegación, estado de menú, detección de keywords.
+4. Formato de respuestas: estilo chatbot municipal (amigable, sin tecnicismos).
+5. Procesamiento de queries: manejo de queries especiales y mapeo de bases de datos.
+6. Gestión de sesiones: estado por sesión y contexto.
+7. Organización del código: estructura de archivos y responsabilidades.
+
+¿Quieres que ajuste alguna sección o agregue más detalles sobre algún aspecto específico?
+
+You are an expert in Python, FastAPI, MCP (Model Context Protocol), and chatbot development with decision trees.
+
+Key Principles
+- Write concise, technical responses with accurate Python examples.
+- Use functional, declarative programming; avoid classes where possible (except for domain models).
+- Prefer iteration and modularization over code duplication.
+- Use descriptive variable names with auxiliary verbs (e.g., is_active, has_permission, current_menu_node).
+- Use lowercase with underscores for directories and files (e.g., routers/user_routes.py).
+- Favor named exports for routes and utility functions.
+- Use the Receive an Object, Return an Object (RORO) pattern.
+
+Python/FastAPI
+- Use def for pure functions and async def for asynchronous operations.
+- Use type hints for all function signatures. Prefer Pydantic models over raw dictionaries for input validation.
+- File structure: exported router, sub-routes, utilities, static content, types (models, schemas).
+- Use concise, one-line syntax for simple conditional statements (e.g., if condition: do_something()).
+
+Error Handling and Validation
+- Prioritize error handling and edge cases:
+  - Handle errors and edge cases at the beginning of functions.
+  - Use early returns for error conditions to avoid deeply nested if statements.
+  - Place the happy path last in the function for improved readability.
+  - Avoid unnecessary else statements; use the if-return pattern instead.
+  - Use guard clauses to handle preconditions and invalid states early.
+  - Implement proper error logging and user-friendly error messages.
+  - Use custom error types or error factories for consistent error handling.
+  - NEVER expose technical error details to end users (no stack traces, table names, column names, etc.).
+
+Dependencies
+- FastAPI
+- Pydantic v2
+- Async database libraries like asyncpg or aiomysql
+- SQLAlchemy 2.0 (if using ORM features)
+- MCP (Model Context Protocol) from GitHub: git+https://github.com/modelcontextprotocol/python-sdk.git
+
+FastAPI-Specific Guidelines
+- Use functional components (plain functions) and Pydantic models for input validation and response schemas.
+- Use declarative route definitions with clear return type annotations.
+- Use def for synchronous operations and async def for asynchronous ones.
+- Minimize @app.on_event("startup") and @app.on_event("shutdown"); prefer lifespan context managers for managing startup and shutdown events.
+- Use middleware for logging, error monitoring, and performance optimization.
+- Optimize for performance using async functions for I/O-bound tasks, caching strategies, and lazy loading.
+- Use HTTPException for expected errors and model them as specific HTTP responses.
+- Use middleware for handling unexpected errors, logging, and error monitoring.
+- Use Pydantic's BaseModel for consistent input/output validation and response schemas.
+- Store session state in dictionaries keyed by session_id (e.g., chat_messages: Dict[str, List[Dict]], menu_states: Dict[str, Dict]).
+
+Performance Optimization
+- Minimize blocking I/O operations; use asynchronous operations for all database calls and external API requests.
+- Implement caching for static and frequently accessed data:
+  - Menu tree structure (load once, cache in memory)
+  - Database table structures (TTL: 5 minutes)
+  - Search results (TTL: 5 minutes)
+  - Use connection pooling for database connections (SQLAlchemy QueuePool).
+- Optimize data serialization and deserialization with Pydantic.
+- Use lazy loading techniques for large datasets and substantial API responses.
+- Limit database search results (max 15-20 records per query) for faster responses.
+
+Key Conventions
+1. Rely on FastAPI's dependency injection system for managing state and shared resources.
+2. Prioritize API performance metrics (response time, latency, throughput).
+3. Limit blocking operations in routes:
+   - Favor asynchronous and non-blocking flows.
+   - Use dedicated async functions for database and external API operations.
+   - Structure routes and dependencies clearly to optimize readability and maintainability.
+
+MCP (Model Context Protocol) Guidelines
+- MCP servers are initialized from servers_config.json and managed via Server class.
+- Tools are discovered dynamically from MCP servers and formatted for LLM consumption.
+- Tool execution follows the MCP protocol: ClientSession → stdio_client → tool call → result.
+- Always handle MCP_AVAILABLE flag - gracefully degrade if MCP module is not available.
+- Format tools for LLM using Tool.format_for_llm() method with clear descriptions and required arguments.
+- Use async/await for all MCP server interactions (tool discovery, execution).
+- Clean up server connections properly in cleanup_servers() method.
+- Store tool results and pass them back to LLM for interpretation, not directly to users.
+
+Menu Tree and Decision Tree System
+- Menu structure is defined in menu_config.json with hierarchical nodes (MenuNode).
+- Each MenuNode has: id, title, description, action (menu/query/info), children, keywords, db_query.
+- MenuTree class manages navigation, state, and node lookup.
+- Menu state is stored per session: menu_states[session_id] = {current_node_id, history, etc.}
+- Navigation can be by:
+  - Number selection (e.g., "1", "2") - maps to children array index
+  - Keyword/title matching - uses KeywordDetector with scoring system
+  - Direct node ID - for programmatic access
+- Always validate menu navigation:
+  - Check if node exists before navigation
+  - Handle invalid selections gracefully
+  - Provide fallback to root menu or parent menu
+- Remove duplicate children when loading menu to prevent repeated options.
+- Use find_node_by_keyword() with scoring to find best match (title match > keyword match > description match).
+
+Database Query Processing
+- Database queries are handled through DatabaseClient with connection pooling.
+- Special query patterns are processed by QueryProcessor:
+  - "datalake_economico_ultimo_valor" → get_latest_data(db_key, limit=10)
+  - "datalake_socio_ver_grafico" → process_special_query()
+- Database keys mapping (IMPORTANT - use exact names):
+  - datalake_economico → "datalake-economico" (con guión)
+  - dwh_economico → "dhw_economico" (escrito dhw, no dwh)
+  - dwh_socio → "dhw_sociodemografico" (escrito dhw, no dwh)
+- Always use friendly field names (friendly_names.py) when formatting results.
+- NEVER expose table names, column names, or database names to users.
+- Format database results as statistical information, not technical metadata.
+
+## Database Schema Context (IPECD - Instituto Provincial de Estadística y Censos)
+
+### Base de datos: datalake-economico (Datos Económicos Crudos)
+Total: ~12 millones de registros en 60+ tablas
+
+**Indicadores de Precios (IPC):**
+- `ipc_valores`: Índice de Precios al Consumidor por región/categoría/división (29,211 registros)
+- `ipc_categoria`: Categorías del IPC (13 categorías)
+- `ipc_division`: Divisiones del IPC (34 divisiones)
+- `ipc_subdivision`: Subdivisiones del IPC (45 subdivisiones)
+- `ipc_online`: Variaciones mensuales/interanuales IPC
+- `ipc_caba`: IPC específico de CABA
+- `ipc_productos`: Precios de productos por región (7,140 registros)
+- `ipicorr`: IPC de Corrientes con variaciones
+
+**Tipo de Cambio (Dólar):**
+- `dolar_blue`: Cotización dólar blue compra/venta (5,510 registros)
+- `dolar_oficial`: Cotización dólar oficial compra/venta
+- `dolar_mep`: Cotización dólar MEP (1,437 registros)
+- `dolar_ccl`: Cotización dólar CCL (3,171 registros)
+
+**Empleo y Salarios:**
+- `OEDE_valores`: Datos del Observatorio de Empleo (640,500 registros)
+- `OEDE_diccionario`: Diccionario de categorías OEDE (70 categorías)
+- `sipa_valores`: Datos del SIPA - Sistema Integrado Previsional (5,948 registros)
+- `sipa_tiporegistro`: Tipos de registro SIPA (8 tipos)
+- `indicadores_salarios`: Índices de salarios público/privado (120 registros)
+- `ripte`: Remuneración Imponible Promedio (375 registros)
+- `salario_mvm`: Salario mínimo vital y móvil (730 registros)
+- `dp_puestostrabajo_sector_privado`: Puestos de trabajo sector privado (3.5M registros)
+- `dp_puestostrabajo_total`: Puestos de trabajo totales (3.7M registros)
+- `dp_salarios_sector_privado`: Salarios sector privado (3.5M registros)
+- `dp_salarios_total`: Salarios totales (3.7M registros)
+- `ieric_puestos_trabajo`: Puestos de trabajo construcción (5,256 registros)
+- `ieric_ingreso`: Ingresos construcción (5,256 registros)
+- `ieric_actividad`: Actividad empresarial construcción (5,976 registros)
+- `srt`: Datos de la Superintendencia de Riesgos del Trabajo (695,299 registros)
+
+**Actividad Económica:**
+- `emae`: Estimador Mensual de Actividad Económica (12,496 registros)
+- `emae_categoria`: Categorías del EMAE (16 categorías)
+- `emae_variaciones`: Variaciones del EMAE (260 registros)
+- `pbg_valor_anual`: Producto Bruto Geográfico anual (340 registros)
+- `pbg_valor_trimestral`: PBG trimestral (1,360 registros)
+- `pbg_anual_desglosado`: PBG desglosado por sector (1,617 registros)
+
+**Industria y Producción:**
+- `ipi_valores`: Índice de Producción Industrial (117 registros)
+- `ipi_variacion_interanual`: Variaciones IPI (105 registros)
+- `combustible`: Ventas de combustible por provincia (186,460 registros)
+
+**Comercio y Transporte:**
+- `supermercado_encuesta`: Facturación supermercados por rubro (2,730 registros)
+- `dnrpa`: Patentamiento de vehículos (6,816 registros)
+- `anac`: Pasajeros aeropuertos (1,938 registros)
+- `canasta_basica`: Precios canasta básica (449 registros)
+
+**Diccionarios y Referencias:**
+- `dp_provincias` / `identificador_provincias`: Provincias argentinas (25)
+- `dp_localidades` / `identificador_localidades`: Departamentos/localidades (510/1020)
+- `identificador_regiones`: Regiones del país (7)
+- `diccionario_clae` / `dp_sectores_de_actividad`: Clasificación de actividades económicas (86)
+- `dicc_clanae2004`: Secciones CLANAE 2004 (16)
+
+**Vistas útiles:**
+- `vista_ipc_bot`: IPC formateado para el chatbot
+- `vista_dnrpa`: Patentamientos con nombres de provincia
+- `v_pbg_anual_by_act`: PBG anual por actividad
+- `v_pbg_tri_by_act`: PBG trimestral por actividad
+
+### Base de datos: dhw_economico (Data Warehouse Económico)
+Indicadores procesados y semáforos económicos
+
+**Semáforo Económico:**
+- `semaforo_interanual`: Variaciones interanuales de indicadores clave (34 registros)
+  - Campos: combustible_vendido, patentamiento_0km_auto, patentamiento_0km_motocicleta,
+    pasajeros_terminal, pasajeros_aeropuerto, venta_supermercados, exportaciones, empleo_sipa, ipicorr
+- `semaforo_intermensual`: Variaciones mensuales de los mismos indicadores (33 registros)
+
+### Base de datos: dhw_sociodemografico (Data Warehouse Sociodemográfico)
+Datos sociales y demográficos procesados
+
+**Censo y Población:**
+- `censo_ipecd_municipios`: Población por municipio 2010 vs 2022 (227 municipios)
+  - Campos: municipio, poblacion_2010, poblacion_2022, variacion_absoluta, peso_relativo, variacion_relativa
+
+**Empleo y Trabajo:**
+- `eph_trabajo_tasas`: Tasas de empleo/desempleo EPH por aglomerado (858 registros)
+  - Campos: Region, Aglomerado, Año, Trimestre, Tasa_Actividad, Tasa_Empleo, Tasa_Desocupacion
+- `ecv_trabajo`: Encuesta de Condiciones de Vida - trabajo (80 registros)
+  - Campos: Tasas, Trabajo público/privado, Salarios promedio, Categoría ocupacional
+
+**Pobreza e Indigencia:**
+- `correo_cbt_cba`: Canasta Básica Total y Alimentaria (115 registros)
+  - Campos: CBA/CBT por región (GBA, NEA), valores familiares, variaciones mensuales/interanuales
+
+### Columnas de fecha comunes (para ordenar por más reciente):
+- `fecha` (tipo DATE) - más común
+- `Fecha` (tipo DATE o DATETIME) - en algunas tablas
+- `periodo` (tipo DATE) - en tablas de SIPA
+- `año` / `Año` (tipo INT o TEXT) - para datos anuales
+
+### Patrones de consulta frecuentes:
+1. **Último valor IPC**: `SELECT * FROM ipc_valores ORDER BY fecha DESC LIMIT 10`
+2. **Cotización dólar**: `SELECT * FROM dolar_blue ORDER BY fecha DESC LIMIT 1`
+3. **Empleo por provincia**: `SELECT * FROM sipa_valores WHERE id_provincia = X ORDER BY fecha DESC`
+4. **Patentamientos**: `SELECT * FROM vista_dnrpa ORDER BY fecha DESC LIMIT 20`
+5. **Semáforo económico**: `SELECT * FROM semaforo_interanual ORDER BY fecha DESC LIMIT 1`
+6. **Tasas EPH**: `SELECT * FROM eph_trabajo_tasas WHERE Aglomerado LIKE '%Corrientes%' ORDER BY Fecha DESC`
+
+User-Friendly Response Formatting (Chatbot Style - Like Municipal Bot)
+- CRITICAL: All responses must be friendly, conversational, and non-technical.
+- NEVER mention:
+  - Table names, column names, database names
+  - API endpoints, HTTP methods, JSON structures
+  - Technical terms like "endpoint", "API", "GET", "POST", "database.table"
+- ALWAYS:
+  - Present concrete statistical information and numerical data
+  - Use friendly, conversational language (like explaining to a non-technical person)
+  - Format numbers clearly (thousands separators, percentages)
+  - Use markdown formatting: ## for titles, **bold** for emphasis, tables for comparisons
+  - Keep tables simple (max 4 columns, max 5-7 rows)
+  - Use lists and paragraphs separated by blank lines for readability
+  - Explain what the data means in simple terms
+- When no data is found:
+  - Provide friendly message: "Lo siento, pero no tenemos datos disponibles..."
+  - Suggest related menu options using RelatedOptionsFinder
+  - Show menu options that might be relevant to the user's query
+- System message to LLM must explicitly instruct:
+  - "NUNCA menciones nombres de tablas, columnas, bases de datos"
+  - "Presenta SOLO la información estadística concreta"
+  - "Responde de manera amigable y conversacional"
+
+Keyword Detection and Intent Recognition
+- KeywordDetector matches user input to menu nodes using:
+  - Title matching (highest priority)
+  - Keyword matching (from node.keywords)
+  - Description matching (lowest priority)
+- Scoring system: title match = 10, keyword match = 5, description match = 1.
+- Common keywords are predefined (ultimo, primero, promedio, economico, socio, etc.).
+- Query patterns use regex for specific intents (último valor, año 2023, etc.).
+- When keyword is detected, navigate to corresponding menu node or execute db_query.
+
+Special Query Handling
+- Detect special queries from menu options (ultimo_valor, ver_grafico, comparar_fechas).
+- Extract database key from query (datalake_economico, dwh_socio, etc.).
+- Use QueryProcessor.get_latest_data() for "último valor" queries:
+  - Search up to 10 tables in the specified database
+  - Order by date column if available (fecha, date, año, ano)
+  - Return limit=10 records by default
+- Use QueryProcessor.process_special_query() to translate menu queries to actionable database searches.
+- If direct data query fails, use RelatedOptionsFinder to suggest relevant menu options.
+
+Session Management
+- Each chat session has a unique session_id.
+- Store per session:
+  - chat_messages[session_id]: List of message history
+  - menu_states[session_id]: Current menu node, navigation history
+- Initialize session with system message containing:
+  - Available tools (MCP tools)
+  - Database access instructions
+  - User-friendly response guidelines
+  - Menu context (if applicable)
+- Reset session state when user navigates to root menu.
+
+Error Messages and Logging
+- Log technical details at DEBUG/INFO level for developers.
+- Show friendly messages to users (no stack traces, no technical jargon).
+- Use logging.info() for important flow events (menu navigation, database queries).
+- Use logging.warning() for recoverable issues (no data found, invalid menu selection).
+- Use logging.error() for unexpected errors with exc_info=True for debugging.
+- Never log sensitive information (passwords, API keys, personal data).
+
+Available Tools (CRITICAL - Cover ALL database data)
+Every piece of data in the database MUST have a corresponding tool.
+- get_ipc: Índice de Precios (ipc_valores, ipc_online)
+- get_dolar: Cotización dólar (dolar_blue, dolar_oficial, dolar_mep, dolar_ccl)
+- get_empleo: Tasas EPH (eph_trabajo_tasas)
+- get_ecv: Encuesta Calidad de Vida (ecv_trabajo)
+- get_semaforo: Semáforo económico (semaforo_interanual, semaforo_intermensual)
+- get_censo: Población municipios (censo_ipecd_municipios)
+- get_censo_departamentos: Población departamentos
+- get_combustible: Ventas combustible (combustible)
+- get_canasta_basica: Canasta básica (canasta_basica)
+- get_patentamientos: Vehículos 0km (dnrpa)
+- get_aeropuertos: Pasajeros aeropuertos (anac)
+- get_oede: Observatorio Empleo (OEDE_valores)
+- get_pobreza: Líneas pobreza/indigencia (correo_cbt_cba)
+- search_database: Búsqueda general
+
+Domain Relevance (intent_classifier.py)
+- is_domain_relevant(): Filtra preguntas fuera del dominio IPECD
+- Preguntas irrelevantes reciben respuesta amigable sin ejecutar tools
+- DOMAIN_KEYWORDS: ipc, dolar, empleo, censo, patentamiento, aeropuerto, pobreza, etc.
+
+Smart Query Handling (QueryRouter)
+- El sistema detecta automáticamente consultas complejas y ejecuta herramientas sin intervención del menú.
+- Consultas complejas incluyen: comparativas, menciones de múltiples lugares, preguntas específicas con entidades.
+- Flujo: is_complex_query() → QueryRouter.route_and_execute() → ToolExecutor.execute()
+- Mapeo de palabras clave a herramientas en TOOL_MAPPINGS:
+  - población/censo → get_censo (param: municipio)
+  - dólar/cotización → get_dolar (param: tipo: blue/oficial/mep/ccl)
+  - empleo/trabajo/eph → get_empleo (param: provincia)
+  - ipc/inflación → get_ipc (param: region)
+  - patentamientos → get_patentamientos (param: provincia)
+  - aeropuertos → get_aeropuertos (param: aeropuerto)
+  - combustible → get_combustible (param: provincia)
+  - pobreza/indigencia → get_pobreza (param: region)
+  - semáforo/indicadores → get_semaforo (param: tipo)
+  - ecv/calidad de vida → get_ecv
+  - oede/observatorio → get_oede (param: provincia)
+- Ubicaciones conocidas: municipios de Corrientes, provincias argentinas, regiones (NEA, NOA, GBA, etc.)
+- Comparativas: detecta "comparar", "vs", "entre X y Y", o 2+ ubicaciones en la consulta
+
+Code Organization
+- api.py: FastAPI routes, endpoint handlers, session management
+- chat_session.py: Chat orchestration, LLM interaction, tool execution
+- menu_tree.py: Menu structure, navigation, node management
+- keyword_detector.py: Intent detection, keyword matching
+- query_processor.py: Special query translation, latest data retrieval
+- query_router.py: Smart routing of complex queries to tools automatically
+- database.py: Database client, connection pooling, search, caching
+- mcp_server.py: MCP server management, tool discovery, execution
+- mcp_tools_server.py: DatabaseTools class with all data tools
+- config.py: Configuration management, environment variables
+- friendly_names.py: Mapping technical field names to user-friendly names
+- related_options_finder.py: Finding and suggesting related menu options
+- intent_classifier.py: Intent classification, domain relevance, complex query detection
+- learning_memory.py: Learning/memory system with MySQL storage
+- tool_executor.py: Centralized tool execution dispatcher
+
+Testing Guidelines (CRITICAL)
+- EVERY new feature MUST have tests before being considered complete.
+- Use pytest as the testing framework with pytest.ini configuration.
+- Test directory structure: tests/ with test_*.py files.
+- Use pytest markers: @pytest.mark.unit, @pytest.mark.integration, @pytest.mark.api, @pytest.mark.slow
+- Run tests with: pytest tests/ -v
+
+Test File Organization:
+- tests/conftest.py: Shared fixtures and configuration
+- tests/test_intent_classifier.py: Intent detection tests
+- tests/test_learning_memory.py: Learning system tests
+- tests/test_tool_executor.py: Tool execution tests
+- tests/test_menu_tree.py: Menu navigation tests
+- tests/test_api.py: API endpoint tests
+- tests/test_database_tools.py: Database tools tests
+
+Testing Best Practices:
+- Use fixtures for reusable test data and mocks
+- Mock external dependencies (database, LLM, MCP servers)
+- Test happy path AND error cases
+- Test edge cases (empty inputs, special characters, unicode)
+- Use parametrize for testing multiple inputs
+- Keep tests isolated and independent
+- Name tests descriptively: test_<what>_<condition>_<expected_result>
+
+Required Test Coverage:
+1. **Intent Classifier**:
+   - Conceptual questions ("que es", "como funciona", "para que sirve")
+   - Data requests ("dame", "ultimo", "muestrame")
+   - Different indicators (IPC, EPH, ECV, etc.)
+   - Edge cases (empty, special chars, mixed case)
+
+2. **Learning Memory**:
+   - Text normalization
+   - Similarity calculation
+   - Key term detection (IPC != EPH != ECV)
+   - Stop words filtering
+   - Database operations (learn, find_similar, get_response)
+
+3. **Tool Executor**:
+   - All registered tools execute correctly
+   - Error handling for missing tools
+   - Error handling for database failures
+   - Argument passing
+
+4. **Menu Tree**:
+   - Node creation and properties
+   - Navigation by ID and keyword
+   - Menu formatting
+   - Keyword search
+
+5. **API Endpoints**:
+   - /api/chat - message handling
+   - /api/memory/stats - statistics
+   - /api/memory/suggestions - autocomplete
+   - Error responses (422, 500)
+   - Session isolation
+
+6. **Database Tools**:
+   - get_ipc, get_dolar, get_empleo, get_censo, etc.
+   - Empty data handling
+   - Connection error handling
+   - Data formatting
+
+Test Command Examples:
+```bash
+# Run all tests
+pytest tests/ -v
+
+# Run only unit tests
+pytest tests/ -v -m unit
+
+# Run only API tests
+pytest tests/ -v -m api
+
+# Run with coverage
+pytest tests/ --cov=. --cov-report=html
+
+# Run specific test file
+pytest tests/test_intent_classifier.py -v
+
+# Run specific test
+pytest tests/test_intent_classifier.py::TestClassifyIntent::test_que_es_returns_conceptual -v
+```
+
+Refer to FastAPI documentation for Data Models, Path Operations, and Middleware for best practices.
+  

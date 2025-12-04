@@ -1,0 +1,210 @@
+"""MCP server management module."""
+import asyncio
+import logging
+import os
+import shutil
+from typing import Dict, List, Optional, Any
+
+MCP_AVAILABLE = False
+ClientSession = None
+StdioServerParameters = None
+
+try:
+    from mcp import ClientSession, StdioServerParameters
+    from mcp.client.stdio import stdio_client
+    MCP_AVAILABLE = True
+except ImportError:
+    logging.warning("MCP module not available. MCP server functionality will be disabled.")
+
+
+class Tool:
+    """Represents a tool with its properties and formatting."""
+
+    def __init__(self, name: str, description: str, input_schema: Dict[str, Any]) -> None:
+        self.name: str = name
+        self.description: str = description
+        self.input_schema: Dict[str, Any] = input_schema
+
+    def format_for_llm(self) -> str:
+        """Format tool information for LLM.
+        
+        Returns:
+            A formatted string describing the tool.
+        """
+        args_desc = []
+        if 'properties' in self.input_schema:
+            for param_name, param_info in self.input_schema['properties'].items():
+                arg_desc = f"- {param_name}: {param_info.get('description', 'No description')}"
+                if param_name in self.input_schema.get('required', []):
+                    arg_desc += " (required)"
+                args_desc.append(arg_desc)
+        
+        return f"""
+Tool: {self.name}
+Description: {self.description}
+Arguments:
+{chr(10).join(args_desc)}
+"""
+
+
+class Server:
+    """Manages MCP server connections and tool execution."""
+
+    def __init__(self, name: str, config: Dict[str, Any]) -> None:
+        self.name: str = name
+        self.config: Dict[str, Any] = config
+        self.stdio_context: Optional[Any] = None
+        self.session: Optional[ClientSession] = None
+        self._cleanup_lock: asyncio.Lock = asyncio.Lock()
+        self.capabilities: Optional[Dict[str, Any]] = None
+
+    async def initialize(self) -> None:
+        """Initialize the server connection."""
+        if not MCP_AVAILABLE:
+            raise RuntimeError("MCP module not available. Please install with: pip install mcp")
+        # Resolver el comando usando shutil.which() para comandos comunes
+        command = self.config['command']
+        if command == "npx":
+            resolved = shutil.which("npx")
+            if resolved:
+                command = resolved
+            else:
+                logging.warning("npx not found in PATH, using 'npx' as-is")
+        elif command == "uvx":
+            resolved = shutil.which("uvx")
+            if resolved:
+                command = resolved
+                logging.info(f"Resolved uvx to: {command}")
+            else:
+                logging.error("uvx not found in PATH! Available PATH: %s", os.environ.get('PATH', 'NOT SET'))
+                raise RuntimeError("uvx command not found in PATH. Please ensure uv is installed and uvx is available.")
+        
+        logging.info(f"Using command: {command} with args: {self.config['args']}")
+        server_params = StdioServerParameters(
+            command=command,
+            args=self.config['args'],
+            env={**os.environ, **self.config['env']} if self.config.get('env') else None
+        )
+        try:
+            self.stdio_context = stdio_client(server_params)
+            read, write = await self.stdio_context.__aenter__()
+            self.session = ClientSession(read, write)
+            await self.session.__aenter__()
+            self.capabilities = await self.session.initialize()
+        except Exception as e:
+            logging.error(f"Error initializing server {self.name}: {e}")
+            await self.cleanup()
+            raise
+
+    async def list_tools(self) -> List[Tool]:
+        """List available tools from the server.
+        
+        Returns:
+            A list of available tools.
+            
+        Raises:
+            RuntimeError: If the server is not initialized.
+        """
+        if not self.session:
+            raise RuntimeError(f"Server {self.name} not initialized")
+        
+        tools_response = await self.session.list_tools()
+        tools = []
+        
+        supports_progress = (
+            self.capabilities 
+            and 'progress' in self.capabilities
+        )
+        
+        if supports_progress:
+            logging.info(f"Server {self.name} supports progress tracking")
+        
+        for item in tools_response:
+            if isinstance(item, tuple) and item[0] == 'tools':
+                for tool in item[1]:
+                    tools.append(Tool(tool.name, tool.description, tool.inputSchema))
+                    if supports_progress:
+                        logging.info(f"Tool '{tool.name}' will support progress tracking")
+        
+        return tools
+
+    async def execute_tool(
+        self, 
+        tool_name: str, 
+        arguments: Dict[str, Any], 
+        retries: int = 2, 
+        delay: float = 1.0
+    ) -> Any:
+        """Execute a tool with retry mechanism.
+        
+        Args:
+            tool_name: Name of the tool to execute.
+            arguments: Tool arguments.
+            retries: Number of retry attempts.
+            delay: Delay between retries in seconds.
+            
+        Returns:
+            Tool execution result.
+            
+        Raises:
+            RuntimeError: If server is not initialized.
+            Exception: If tool execution fails after all retries.
+        """
+        if not self.session:
+            raise RuntimeError(f"Server {self.name} not initialized")
+
+        attempt = 0
+        while attempt < retries:
+            try:
+                supports_progress = (
+                    self.capabilities 
+                    and 'progress' in self.capabilities
+                )
+
+                if supports_progress:
+                    logging.info(f"Executing {tool_name} with progress tracking...")
+                    result = await self.session.call_tool(
+                        tool_name, 
+                        arguments,
+                        progress_token=f"{tool_name}_execution"
+                    )
+                else:
+                    logging.info(f"Executing {tool_name}...")
+                    result = await self.session.call_tool(tool_name, arguments)
+
+                return result
+
+            except Exception as e:
+                attempt += 1
+                logging.warning(f"Error executing tool: {e}. Attempt {attempt} of {retries}.")
+                if attempt < retries:
+                    logging.info(f"Retrying in {delay} seconds...")
+                    await asyncio.sleep(delay)
+                else:
+                    logging.error("Max retries reached. Failing.")
+                    raise
+
+    async def cleanup(self) -> None:
+        """Clean up server resources."""
+        async with self._cleanup_lock:
+            try:
+                if self.session:
+                    try:
+                        await self.session.__aexit__(None, None, None)
+                    except Exception as e:
+                        logging.warning(f"Warning during session cleanup for {self.name}: {e}")
+                    finally:
+                        self.session = None
+
+                if self.stdio_context:
+                    try:
+                        await self.stdio_context.__aexit__(None, None, None)
+                    except (RuntimeError, asyncio.CancelledError) as e:
+                        logging.info(f"Note: Normal shutdown message for {self.name}: {e}")
+                    except Exception as e:
+                        logging.warning(f"Warning during stdio cleanup for {self.name}: {e}")
+                    finally:
+                        self.stdio_context = None
+            except Exception as e:
+                logging.error(f"Error during cleanup of server {self.name}: {e}")
+

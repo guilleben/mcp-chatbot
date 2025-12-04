@@ -40,3 +40,4 @@ ENV/
 *.db
 *.sqlite3
 *.log
+legacy_bot/
